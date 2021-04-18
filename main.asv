@@ -4,36 +4,21 @@
 %   
 %   Final Project Main Script
 
-%% Truth Model
 clear; close all; clc;
 
-% System parameters
-SYSTEM.n = 4; % Number of states
-SYSTEM.p = 3; % Number of measurements
-SYSTEM.N = 5000; % Number of time steps
-SYSTEM.dt = 50; % [s] Time step interval
+%% Truth Model
 
-% Constants
+% System parameters
+system.n = 4; % Number of states
+system.p = 4; % Number of measurements
+system.N = 
+
 CONST.mu_E = 3.986e5; % [km^3/s^2] Earth's Gravitational Parameter
 CONST.R_E = 6378; % [km] Earth's Radius
+t_vec = 0:10:100000; % [s] Time vector
 
-% Noise specifications
-NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
-% NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 1,      0,      0;
-            0,      1,      0;
-            0,      0,      0.01]; % Measurement noise covariance
-% NOISE.R = zeros(3, 3);
+NOISE.Q = 1e-10 * eye(
 
-rng(2021);
-
-% Truth Model
-[t, X, Y] = TruthModelSim(SYSTEM, CONST, NOISE);
-
-fig = figure;
-fig.WindowState = 'maximized';
-PlotTrajectories(t, X, fig);
-PlotMeasurements(t, Y, fig);
 
 %% UKF
 %Parameters for UKF

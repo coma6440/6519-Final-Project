@@ -1,0 +1,24 @@
+function [fig] = PlotMeasurements(t, Y, fig)
+%PlotMeasurements Plots the time history of measurements of each satellite
+%taken by the chief satellite
+
+[p, N, n_sm1] = size(Y);
+
+subplot_i = p; % Subplot row index
+
+if nargin < 3
+    fig = figure;
+    subplot_j = 1; % Subplot column index
+else
+    figure(fig);
+    subplot_j = 2;
+end
+
+titleStr = ["Range [km]"; "Range Rate [km/s]"; "Azimuth [rad]"];
+
+for i = 1:p
+    subplot(subplot_i, subplot_j, subplot_j*i);
+    title(ttlS
+
+end
+
