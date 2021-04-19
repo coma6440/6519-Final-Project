@@ -12,7 +12,7 @@ function [Y] = GetY(X, R)
 
 [~, N, n_s] = size(X);
 
-p = 3; % Number of measurements
+p = 4; % Number of measurements
 Y = zeros(p, N, n_s-1);
 
 [Sv, pd] = chol(R); % Cholesky factorization and not positive definite flag
@@ -22,9 +22,10 @@ for i = 2:n_s
     rho = sqrt((X(1, :, 1) - X(1, :, i)).^2 + (X(3, :, 1) - X(3, :, i)).^2); % [km]
     rhodot = ((X(1, :, 1) - X(1, :, i)).*(X(2, :, i) - X(2, :, i)) + ...
         (X(3, :, 1) - X(3, :, i)).*(X(4, :, 1) - X(4, :, i)))./rho; % [km/s]
-    phi = atan2((X(3, :, 1) - X(3, :, i)), (X(1, :, 1) - X(1, :, i))); % [rad]
+    az = atan2((X(3, :, 1) - X(3, :, i)), (X(1, :, 1) - X(1, :, i))); % [rad]
+    el = atan2((X(5, :, 1) - X(5, :, i)), (X(1, :, 1) - X(1, :, i))); % [rad]
     
-    Y = [rho; rhodot; phi];
+    Y = [rho; rhodot; az; el];
     
     if pd == 0 % If R is positive definite
         Y = Y + Sv*vk;

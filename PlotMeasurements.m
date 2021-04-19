@@ -15,8 +15,8 @@ else
     subplot_j = 2;
 end
 
-ttlStr = ["Range"; "Range Rate"; "Azimuth"];
-ylblStr = ["$\rho$ [km]"; "$\dot{\rho}$ [km/s]"; "$\phi$ [rad]"];
+ttlStr = ["Range"; "Range Rate"; "Azimuth"; "Elevation"];
+ylblStr = ["$\rho$ [km]"; "$\dot{\rho}$ [km/s]"; "$\theta$ [rad]"; "$\phi$ [rad]"];
 
 for i = 1:p
     subplot(subplot_i, subplot_j, subplot_j*i);

@@ -8,8 +8,7 @@
 clear; close all; clc;
 
 % System parameters
-SYSTEM.n = 4; % Number of states
-SYSTEM.p = 3; % Number of measurements
+SYSTEM.n = 6; % Number of states
 SYSTEM.N = 5000; % Number of time steps
 SYSTEM.dt = 50; % [s] Time step interval
 
@@ -20,15 +19,18 @@ CONST.R_E = 6378; % [km] Earth's Radius
 % Noise specifications
 NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 1,      0,      0;
-            0,      1,      0;
-            0,      0,      0.01]; % Measurement noise covariance
+NOISE.R = [ 1,      0,      0,      0;
+            0,      1,      0,      0;
+            0,      0,      0.01,   0;
+            0,      0,      0,      0.01]; % Measurement noise covariance
 % NOISE.R = zeros(3, 3);
 
 rng(2021);
 
 % Truth Model
 [t, X, Y] = TruthModelSim(SYSTEM, CONST, NOISE);
+
+SYSTEM.p = length(Y); % Number of measurements
 
 fig = figure;
 fig.WindowState = 'maximized';
