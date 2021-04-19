@@ -37,7 +37,8 @@ PlotMeasurements(t, Y, fig);
 
 %% UKF
 %Parameters for UKF
-params.n = 2;
+params.n = 4;
+params.p = 3;
 params.kappa = 0;
 params.beta = 2;
 params.alpha = 0.5;
@@ -48,13 +49,23 @@ params.wm = params.lambda/(params.n + params.lambda);
 params.wc = params.wm + 1 - params.alpha^2 + params.beta;
 params.wm(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
 params.wc(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
+params.Q = 10*eye(4);
+params.R = NOISE.R;
+params.dt = SYSTEM.dt;
 
-xp = [0;0];
-xm = [0;0];
-Pp = 10*eye(2);
-Pm = 10*eye(2);
-
-for k = 1:150
-    [xm, Pm] = predict_UKF(Pp, xp, u, params);
-    [xp, Pp] = correct_UKF(Pm, xm, y, params);
+r0 = CONST.R_E + 2000; % [km]
+xp = [r0; 0; 0; 9];
+xm = xp;
+Pp = 10*eye(4);
+Pm = Pp;
+u = zeros(3,1);
+x_chief = X(:,:,1);
+t_vec = t;
+t = 0;
+for k = 1:length(Y)
+    [xm(:,k+1), Pm] = predict_UKF(Pp, xp(:,k), t, u, params, CONST);
+    [xp(:,k+1), Pp] = correct_UKF(Pm, xm(:,k+1), t, Y(:,k), x_chief(:,k), params, CONST);
+    t = t + params.dt;
 end
+
+
