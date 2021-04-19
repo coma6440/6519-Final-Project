@@ -49,23 +49,60 @@ params.wm = params.lambda/(params.n + params.lambda);
 params.wc = params.wm + 1 - params.alpha^2 + params.beta;
 params.wm(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
 params.wc(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
-params.Q = 10*eye(4);
+params.Q = 1e-10*eye(4);
 params.R = NOISE.R;
 params.dt = SYSTEM.dt;
 
 r0 = CONST.R_E + 2000; % [km]
-xp = [r0; 0; 0; 9];
-xm = xp;
+init_state = [r0+100; 1; 0; 8.75];
+xm = zeros(params.n,SYSTEM.N);
+xp = xm;
+xm(:,1) = init_state;
+xp(:,1) = init_state;
 Pp = 10*eye(4);
 Pm = Pp;
 u = zeros(3,1);
 x_chief = X(:,:,1);
+x_deputy = X(:,:,2);
 t_vec = t;
 t = 0;
-for k = 1:length(Y)
-    [xm(:,k+1), Pm] = predict_UKF(Pp, xp(:,k), t, u, params, CONST);
-    [xp(:,k+1), Pp] = correct_UKF(Pm, xm(:,k+1), t, Y(:,k), x_chief(:,k), params, CONST);
+filter = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
+         'ProcessNoise', 1*eye(4), 'MeasurementNoise', NOISE.R,...
+         'StateCovariance', Pp,...
+         'Alpha', 0.05);
+for k = 1:(length(Y)-1)
+    [xm(:,k+1), Pm(:,:,k+1)] = predict(filter,params.dt,CONST);
+    [xp(:,k+1), Pp(:,:,k+1)] = correct(filter,Y(:,k+1),x_chief(:,k+1));
     t = t + params.dt;
 end
 
+ex = (xp - x_deputy);
+figure
+tiledlayout('flow','TileSpacing','Compact')
+nexttile
+hold on
+plot(t_vec,ex(1,:))
+plot(t_vec,2*sqrt(squeeze(Pp(1,1,:))),'--k')
+plot(t_vec,-2*sqrt(squeeze(Pp(1,1,:))),'--k')
+ylabel('X Position Error')
 
+nexttile
+hold on
+plot(t_vec,ex(2,:))
+plot(t_vec,2*sqrt(squeeze(Pp(2,2,:))),'--k')
+plot(t_vec,-2*sqrt(squeeze(Pp(2,2,:))),'--k')
+ylabel('X Velocity Error')
+
+nexttile
+hold on
+plot(t_vec,ex(3,:))
+plot(t_vec,2*sqrt(squeeze(Pp(3,3,:))),'--k')
+plot(t_vec,-2*sqrt(squeeze(Pp(3,3,:))),'--k')
+ylabel('Y Position Error')
+
+nexttile
+hold on
+plot(t_vec,ex(4,:))
+plot(t_vec,2*sqrt(squeeze(Pp(4,4,:))),'--k')
+plot(t_vec,-2*sqrt(squeeze(Pp(4,4,:))),'--k')
+ylabel('Y Velocity Error');
