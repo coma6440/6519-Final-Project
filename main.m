@@ -19,10 +19,10 @@ CONST.R_E = 6378; % [km] Earth's Radius
 % Noise specifications
 NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 0.01,    0,      0,      0;
-            0,      0.01,   0,      0;
-            0,      0,      0.0001,   0;
-            0,      0,      0,      0.0001]; % Measurement noise covariance
+NOISE.R = [ 0.1,    0,      0,      0;
+            0,      0.1,   0,      0;
+            0,      0,      0.01,   0;
+            0,      0,      0,      0.01]; % Measurement noise covariance
 
 % NOISE.R = zeros(3, 3);
 
@@ -37,20 +37,22 @@ fig = figure;
 fig.WindowState = 'maximized';
 PlotTrajectories(t, X, fig);
 PlotMeasurements(t, Y, fig);
+saveas(fig, 'TM.png')
 
 %% UKF
 %Parameters for UKF
 params.n = 6;
 params.p = 4;
-params.Q = 1e-6*eye(6);
+params.Q = 2.5e-7*eye(6);
 % params.Q(1,1) = 0;
 % params.Q(3,3) = 0;
 % params.Q(5,5) = 0;
 
-params.R = [0.01,    0,      0,      0;
-            0,      0.01,   0,      0;
-            0,      0,      0.0001,   0;
-            0,      0,      0,      0.0001]; % Measurement noise covariance
+% params.R = NOISE.R;
+params.R = [1,      0,      0,      0;
+            0,      1,      0,      0;
+            0,      0,      0.1,    0;
+            0,      0,      0,      0.1]; % Measurement noise covariance
 params.dt = SYSTEM.dt;
 
 r0 = CONST.R_E + 2000; % [km]
@@ -85,70 +87,150 @@ for k = 1:(length(Y)-1)
 end
 
 %% State Estimation Errors for UKF
+version_flag = contains(version, '2020');
+
 ex = (xp - x_deputy);
-figure
-tiledlayout('flow','TileSpacing','Compact')
-nexttile
+est_err_fig = figure;
+est_err_fig.Position = [268,98,885,601];
+hold on
+sgtitle('State Estimation Errors')
+
+if version_flag
+    tiledlayout('flow','TileSpacing','Compact')
+    nexttile
+else
+    subplot(3, 2, 1)
+end
 hold on
 plot(t_vec,ex(1,:))
 plot(t_vec,2*sqrt(squeeze(Pp(1,1,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(1,1,:))),'--k')
-ylabel('X Position Error')
+ylabel({'X Position', 'Error [km]'})
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(3, 2, 2)
+end
 hold on
 plot(t_vec,ex(2,:))
 plot(t_vec,2*sqrt(squeeze(Pp(2,2,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(2,2,:))),'--k')
-ylabel('X Velocity Error')
+ylabel({'X Velocity', 'Error [km/s]'})
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(3, 2, 3)
+end
 hold on
 plot(t_vec,ex(3,:))
 plot(t_vec,2*sqrt(squeeze(Pp(3,3,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(3,3,:))),'--k')
-ylabel('Y Position Error')
+ylabel({'Y Position', 'Error [km]'})
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(3, 2, 4)
+end
 hold on
 plot(t_vec,ex(4,:))
 plot(t_vec,2*sqrt(squeeze(Pp(4,4,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(4,4,:))),'--k')
-ylabel('Y Velocity Error');
+ylabel({'Y Velocity', 'Error [km/s]'});
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(3, 2, 5)
+end
 hold on
 plot(t_vec,ex(5,:))
 plot(t_vec,2*sqrt(squeeze(Pp(5,5,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(5,5,:))),'--k')
-ylabel('Z Position Error')
+xlabel('Time [s]')
+ylabel({'Z Position', 'Error [km]'})
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(3, 2, 6)
+end
 hold on
 plot(t_vec,ex(6,:))
 plot(t_vec,2*sqrt(squeeze(Pp(6,6,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(6,6,:))),'--k')
-ylabel('Z Velocity Error');
+xlabel('Time [s]')
+ylabel({'Z Velocity', 'Error [km/s]'});
+grid on
+set(gca, 'FontSize', 14)
+
+saveas(est_err_fig, 'EstErr_UKF.png')
 
 %% Measurement Errors for UKF
-figure
-tiledlayout('flow','TileSpacing','Compact')
-nexttile
+resid_fig = figure;
+hold on
+sgtitle('Measurement Residuals')
+resid_fig.Position = [268,98,885,601];
+if version_flag
+    tiledlayout('flow','TileSpacing','Compact')
+    nexttile
+else
+    subplot(2, 2, 1)
+end
 hold on
 plot(t_vec,yres(1,:))
-ylabel("Range Residual")
+ylabel(["Range Residual", "[km]"])
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(2, 2, 2)
+end
 hold on
 plot(t_vec,yres(2,:))
-ylabel("Range Rate Residual")
+ylabel(["Range Rate Residual", "[km/s]"])
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(2, 2, 3)
+end
 hold on
 plot(t_vec,yres(3,:))
-ylabel("Azimuth Error")
+xlabel('Time [s]')
+ylabel(["Azimuth Error", "[rad]"])
+grid on
+set(gca, 'FontSize', 14)
 
-nexttile
+if version_flag
+    nexttile
+else
+    subplot(2, 2, 4)
+end
 hold on
 plot(t_vec,yres(4,:))
-ylabel("Elevation Error")
+xlabel('Time [s]')
+ylabel(["Elevation Error", "[rad]"])
+grid on
+set(gca, 'FontSize', 14)
+
+saveas(resid_fig, 'ResidualUKF.png')
+
+
+
