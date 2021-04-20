@@ -51,17 +51,21 @@ params.wm = params.lambda/(params.n + params.lambda);
 params.wc = params.wm + 1 - params.alpha^2 + params.beta;
 params.wm(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
 params.wc(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
-params.Q = 1e-10*eye(4);
+params.Q = 1e-10*eye(6);
+params.Q(1,1) = 0;
+params.Q(3,3) = 0;
+params.Q(5,5) = 0;
+
 params.R = NOISE.R;
 params.dt = SYSTEM.dt;
 
 r0 = CONST.R_E + 2000; % [km]
-init_state = [r0+100; 1; 0; 8.75];
+init_state = [r0+100; 1; 0; 8.75; 0; 0];
 xm = zeros(params.n,SYSTEM.N);
 xp = xm;
 xm(:,1) = init_state;
 xp(:,1) = init_state;
-Pp = 10*eye(4);
+Pp = 10*eye(6);
 Pm = Pp;
 u = zeros(3,1);
 x_chief = X(:,:,1);
@@ -69,7 +73,7 @@ x_deputy = X(:,:,2);
 t_vec = t;
 t = 0;
 filter = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
-         'ProcessNoise', 1*eye(4), 'MeasurementNoise', NOISE.R,...
+         'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
          'StateCovariance', Pp,...
          'Alpha', 0.05);
 for k = 1:(length(Y)-1)
