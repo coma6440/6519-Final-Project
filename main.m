@@ -19,8 +19,8 @@ CONST.R_E = 6378; % [km] Earth's Radius
 % Noise specifications
 NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 0.0001,    0,      0,      0;
-            0,      0.0001,   0,      0;
+NOISE.R = [ 0.01,    0,      0,      0;
+            0,      0.01,   0,      0;
             0,      0,      0.0001,   0;
             0,      0,      0,      0.0001]; % Measurement noise covariance
 
@@ -47,8 +47,8 @@ params.Q = 1e-6*eye(6);
 % params.Q(3,3) = 0;
 % params.Q(5,5) = 0;
 
-params.R = [0.0001,    0,      0,      0;
-            0,      0.0001,   0,      0;
+params.R = [0.01,    0,      0,      0;
+            0,      0.01,   0,      0;
             0,      0,      0.0001,   0;
             0,      0,      0,      0.0001]; % Measurement noise covariance
 params.dt = SYSTEM.dt;
