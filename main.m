@@ -39,7 +39,7 @@ PlotMeasurements(t, Y, fig);
 
 %% UKF
 %Parameters for UKF
-params.n = 4;
+params.n = 6;
 params.p = 3;
 params.kappa = 0;
 params.beta = 2;
@@ -112,3 +112,17 @@ plot(t_vec,ex(4,:))
 plot(t_vec,2*sqrt(squeeze(Pp(4,4,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(4,4,:))),'--k')
 ylabel('Y Velocity Error');
+
+nexttile
+hold on
+plot(t_vec,ex(5,:))
+plot(t_vec,2*sqrt(squeeze(Pp(5,5,:))),'--k')
+plot(t_vec,-2*sqrt(squeeze(Pp(5,5,:))),'--k')
+ylabel('Z Position Error')
+
+nexttile
+hold on
+plot(t_vec,ex(6,:))
+plot(t_vec,2*sqrt(squeeze(Pp(6,6,:))),'--k')
+plot(t_vec,-2*sqrt(squeeze(Pp(6,6,:))),'--k')
+ylabel('Z Velocity Error');
