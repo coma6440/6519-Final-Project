@@ -1,4 +1,4 @@
-function [Y] = GetY(X_chief, X_deputy, R)
+function [Y] = GetY(X_deputy, X_chief, R)
 %GetY Generates measurements given the state information X with measurement
 %noise R
 %
@@ -13,7 +13,6 @@ function [Y] = GetY(X_chief, X_deputy, R)
 [~, N] = size(X_chief);
 
 p = 4; % Number of measurements
-Y = zeros(p, N);
 
 [Sv, pd] = chol(R); % Cholesky factorization and not positive definite flag
 vk = randn(p, N);

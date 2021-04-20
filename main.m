@@ -9,7 +9,7 @@ clear; close all; clc;
 
 % System parameters
 SYSTEM.n = 6; % Number of states
-SYSTEM.N = 5000; % Number of time steps
+SYSTEM.N = 940; % Number of time steps
 SYSTEM.dt = 50; % [s] Time step interval
 
 % Constants
@@ -19,8 +19,8 @@ CONST.R_E = 6378; % [km] Earth's Radius
 % Noise specifications
 NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 1,      0,      0,      0;
-            0,      1,      0,      0;
+NOISE.R = 0*[ 1,      0,      0,      0;
+            0,      0.1,   0,      0;
             0,      0,      0.01,   0;
             0,      0,      0,      0.01]; % Measurement noise covariance
 % NOISE.R = zeros(3, 3);
