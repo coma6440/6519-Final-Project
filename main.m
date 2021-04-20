@@ -78,10 +78,12 @@ filter = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
          'Alpha', 0.05);
 for k = 1:(length(Y)-1)
     [xm(:,k+1), Pm(:,:,k+1)] = predict(filter,params.dt,CONST);
+    ym(:,k+1) = measurementfcn(xm(:,k+1),x_chief(:,k+1));
     [xp(:,k+1), Pp(:,:,k+1)] = correct(filter,Y(:,k+1),x_chief(:,k+1));
     t = t + params.dt;
 end
 
+%% State Estimation Errors for UKF
 ex = (xp - x_deputy);
 figure
 tiledlayout('flow','TileSpacing','Compact')
@@ -126,3 +128,26 @@ plot(t_vec,ex(6,:))
 plot(t_vec,2*sqrt(squeeze(Pp(6,6,:))),'--k')
 plot(t_vec,-2*sqrt(squeeze(Pp(6,6,:))),'--k')
 ylabel('Z Velocity Error');
+
+%% Measurement Errors for UKF
+figure
+tiledlayout('flow','TileSpacing','Compact')
+nexttile
+hold on
+plot(t_vec,ym(1,:) - Y(1,:))
+ylabel("Range Residual")
+
+nexttile
+hold on
+plot(t_vec,ym(2,:) - Y(2,:))
+ylabel("Range Rate Residual")
+
+nexttile
+hold on
+plot(t_vec,ym(3,:) - Y(3,:))
+ylabel("Azimuth Error")
+
+nexttile
+hold on
+plot(t_vec,ym(4,:) - Y(4,:))
+ylabel("Elevation Error")
