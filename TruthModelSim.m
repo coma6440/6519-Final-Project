@@ -32,13 +32,13 @@ x0_D = [r0+100; 1; 0; 8.75; 0; 0];
 % x0_D = [r0 + 50; 2.5; 0; 8.5; 0; 0]; % Deputy satellite
 
 % Noise
-w_tilde = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
-
+w_tilde_C = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
+w_tilde_D = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
 % Numeric Integration
 options = odeset('RelTol', 1e-12);
 
-[~, x_chief] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde, t_vec), t_vec, x0_C, options);
-[~, x_deputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde, t_vec), t_vec, x0_D, options);
+[~, x_chief] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde_C, t_vec), t_vec, x0_C, options);
+[~, x_deputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde_D, t_vec), t_vec, x0_D, options);
 
 X(:, :, 1) = x_chief';
 X(:, :, 2) = x_deputy';

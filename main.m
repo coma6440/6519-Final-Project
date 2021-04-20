@@ -19,10 +19,10 @@ CONST.R_E = 6378; % [km] Earth's Radius
 % Noise specifications
 NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 1,      0,      0,      0;
-            0,      1,      0,      0;
-            0,      0,      0.01,   0;
-            0,      0,      0,      0.01]; % Measurement noise covariance
+NOISE.R = [ 0.0001,    0,      0,      0;
+            0,      0.0001,   0,      0;
+            0,      0,      0.0001,   0;
+            0,      0,      0,      0.0001]; % Measurement noise covariance
 % NOISE.R = zeros(3, 3);
 
 rng(2021);
@@ -41,25 +41,15 @@ PlotMeasurements(t, Y, fig);
 %Parameters for UKF
 params.n = 6;
 params.p = 4;
-params.kappa = 0;
-params.beta = 2;
-params.alpha = 0.5;
-params.lambda = params.alpha^2 * ...
-                        (params.n + params.kappa) - ...
-                        params.n;
-params.wm = params.lambda/(params.n + params.lambda);
-params.wc = params.wm + 1 - params.alpha^2 + params.beta;
-params.wm(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
-params.wc(2:(2*params.n + 1)) = 1/(2*(params.n+params.lambda));
-params.Q = 1e-10*eye(6);
-params.Q(1,1) = 0;
-params.Q(3,3) = 0;
-params.Q(5,5) = 0;
+params.Q = 1e-6*eye(6);
+% params.Q(1,1) = 0;
+% params.Q(3,3) = 0;
+% params.Q(5,5) = 0;
 
-params.R = [ 1,      0,      0,      0;
-            0,      1,      0,      0;
-            0,      0,      0.01,   0;
-            0,      0,      0,      0.01];
+params.R = [0.0001,    0,      0,      0;
+            0,      0.0001,   0,      0;
+            0,      0,      0.0001,   0;
+            0,      0,      0,      0.0001]; % Measurement noise covariance
 params.dt = SYSTEM.dt;
 
 r0 = CONST.R_E + 2000; % [km]
@@ -69,7 +59,12 @@ xp = xm;
 xm(:,1) = init_state;
 xp(:,1) = init_state;
 ym = zeros(params.p,SYSTEM.N);
+ym(:,1) = NaN;
 Pp = 1*eye(6);
+Pp(2,2) = 0.0005;
+Pp(4,4) = 0.0005;
+Pp(6,6) = 0.0005;
+
 Pm = Pp;
 u = zeros(3,1);
 x_chief = X(:,:,1);
@@ -79,11 +74,11 @@ t = 0;
 filter = trackingUKF(@transitionfcn, @GetY, init_state, ...
          'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
          'StateCovariance', Pp,...
-         'Alpha', 0.5);
+         'Alpha', 1e-3);
 
 for k = 1:(length(Y)-1)
     [xm(:,k+1), Pm(:,:,k+1)] = predict(filter,params.dt,CONST);
-    ym(:,k+1) = GetY(xm(:,k+1),x_chief(:,k+1), zeros(params.p, params.p));
+    [yres(:,k+1), yrescov(:,:,k+1)] = residual(filter, Y(:,k+1), {x_chief(:,k+1), zeros(params.p, params.p)});
     [xp(:,k+1), Pp(:,:,k+1)] = correct(filter,Y(:,k+1),x_chief(:,k+1), zeros(params.p, params.p));
     t = t + params.dt;
 end
@@ -139,20 +134,20 @@ figure
 tiledlayout('flow','TileSpacing','Compact')
 nexttile
 hold on
-plot(t_vec,ym(1,:) - Y(1,:))
+plot(t_vec,yres(1,:))
 ylabel("Range Residual")
 
 nexttile
 hold on
-plot(t_vec,ym(2,:) - Y(2,:))
+plot(t_vec,yres(2,:))
 ylabel("Range Rate Residual")
 
 nexttile
 hold on
-plot(t_vec,ym(3,:) - Y(3,:))
+plot(t_vec,yres(3,:))
 ylabel("Azimuth Error")
 
 nexttile
 hold on
-plot(t_vec,ym(4,:) - Y(4,:))
+plot(t_vec,yres(4,:))
 ylabel("Elevation Error")
