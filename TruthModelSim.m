@@ -13,7 +13,6 @@ function [t_vec, X, Y] = TruthModelSim(SYSTEM, CONST, NOISE)
 %       measurements of deputy satellites taken by the chief satellite
 
 % System Parameters
-n = SYSTEM.n; % Number of states
 N = SYSTEM.N; % Number of time steps
 dt = SYSTEM.dt; % [s] Time step intervals
 
@@ -32,23 +31,27 @@ x0_D = [r0+100; 1; 0; 8.75; 0; 0];
 % x0_D = [r0 + 50; 2.5; 0; 8.5; 0; 0]; % Deputy satellite
 
 % Noise
-w_tilde_C = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
-w_tilde_D = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
+w_tilde(:, :, 1) = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
+w_tilde(:, :, 2) = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
+
 % Numeric Integration
 options = odeset('RelTol', 1e-12);
 
-[~, x_chief] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde_C, t_vec), t_vec, x0_C, options);
-[~, x_deputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde_D, t_vec), t_vec, x0_D, options);
+[~, X_chief] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde(:, :, 1), t_vec), t_vec, x0_C, options);
+[~, X_deputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde(:, :, 2), t_vec), t_vec, x0_D, options);
 
-X(:, :, 1) = x_chief';
-X(:, :, 2) = x_deputy';
+X_chief = X_chief';
+X_deputy = X_deputy';
+
+X(:, :, 1) = X_chief;
+X(:, :, 2) = X_deputy;
 
 % Measurements
 n_s = 2; % Number of satellites
-X_chief = X(:, :, 1);
+% X_chief = X(:, :, 1);
 
 for i = 2:n_s
-    X_deputy = X(:, :, i);
+%     X_deputy = X(:, :, i);
     
     Y = GetY(X_deputy, X_chief, NOISE.R);
 end

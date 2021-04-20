@@ -13,7 +13,6 @@ function [Y] = GetY(X_deputy, X_chief, R)
 [~, N] = size(X_chief);
 
 p = 4; % Number of measurements
-Y = zeros(p, N);
 
 [Sv, pd] = chol(R); % Cholesky factorization and not positive definite flag
 vk = randn(p, N);

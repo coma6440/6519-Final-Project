@@ -23,6 +23,7 @@ NOISE.R = [ 0.0001,    0,      0,      0;
             0,      0.0001,   0,      0;
             0,      0,      0.0001,   0;
             0,      0,      0,      0.0001]; % Measurement noise covariance
+
 % NOISE.R = zeros(3, 3);
 
 rng(2021);
