@@ -9,7 +9,7 @@ clear; close all; clc;
 
 % System parameters
 SYSTEM.n = 6; % Number of states
-SYSTEM.N = 5000; % Number of time steps
+SYSTEM.N = 940; % Number of time steps
 SYSTEM.dt = 50; % [s] Time step interval
 
 % Constants
@@ -40,7 +40,7 @@ PlotMeasurements(t, Y, fig);
 %% UKF
 %Parameters for UKF
 params.n = 6;
-params.p = 3;
+params.p = 4;
 params.kappa = 0;
 params.beta = 2;
 params.alpha = 0.5;
@@ -56,7 +56,10 @@ params.Q(1,1) = 0;
 params.Q(3,3) = 0;
 params.Q(5,5) = 0;
 
-params.R = NOISE.R;
+params.R = [ 1,      0,      0,      0;
+            0,      1,      0,      0;
+            0,      0,      0.01,   0;
+            0,      0,      0,      0.01];
 params.dt = SYSTEM.dt;
 
 r0 = CONST.R_E + 2000; % [km]
@@ -65,21 +68,23 @@ xm = zeros(params.n,SYSTEM.N);
 xp = xm;
 xm(:,1) = init_state;
 xp(:,1) = init_state;
-Pp = 10*eye(6);
+ym = zeros(params.p,SYSTEM.N);
+Pp = 1*eye(6);
 Pm = Pp;
 u = zeros(3,1);
 x_chief = X(:,:,1);
 x_deputy = X(:,:,2);
 t_vec = t;
 t = 0;
-filter = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
+filter = trackingUKF(@transitionfcn, @GetY, init_state, ...
          'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
          'StateCovariance', Pp,...
-         'Alpha', 0.05);
+         'Alpha', 0.5);
+
 for k = 1:(length(Y)-1)
     [xm(:,k+1), Pm(:,:,k+1)] = predict(filter,params.dt,CONST);
-    ym(:,k+1) = measurementfcn(xm(:,k+1),x_chief(:,k+1));
-    [xp(:,k+1), Pp(:,:,k+1)] = correct(filter,Y(:,k+1),x_chief(:,k+1));
+    ym(:,k+1) = GetY(xm(:,k+1),x_chief(:,k+1), zeros(params.p, params.p));
+    [xp(:,k+1), Pp(:,:,k+1)] = correct(filter,Y(:,k+1),x_chief(:,k+1), zeros(params.p, params.p));
     t = t + params.dt;
 end
 

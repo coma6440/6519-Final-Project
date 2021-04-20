@@ -1,4 +1,4 @@
-function [Y] = GetY(X_chief, X_deputy, R)
+function [Y] = GetY(X_deputy, X_chief, R)
 %GetY Generates measurements given the state information X with measurement
 %noise R
 %
@@ -26,7 +26,6 @@ az = atan2((X_chief(3, :) - X_deputy(3, :)), (X_chief(1, :) - X_deputy(1, :))); 
 el = atan((X_chief(5, :) - X_deputy(5, :))./(X_chief(1, :) - X_deputy(1, :))); % [rad]
 
 Y = [rho; rhodot; az; el];
-
 if pd == 0 % If R is positive definite
     Y = Y + Sv*vk;
 end

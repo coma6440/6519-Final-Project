@@ -50,7 +50,7 @@ X_chief = X(:, :, 1);
 for i = 2:n_s
     X_deputy = X(:, :, i);
     
-    Y = GetY(X_chief, X_deputy, NOISE.R);
+    Y = GetY(X_deputy, X_chief, NOISE.R);
 end
 
 end
