@@ -44,7 +44,14 @@ X(:, :, 1) = x_chief';
 X(:, :, 2) = x_deputy';
 
 % Measurements
-Y = GetY(X, NOISE.R);
+n_s = 2; % Number of satellites
+X_chief = X(:, :, 1);
+
+for i = 2:n_s
+    X_deputy = X(:, :, i);
+    
+    Y = GetY(X_chief, X_deputy, NOISE.R);
+end
 
 end
 

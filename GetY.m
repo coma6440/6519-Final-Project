@@ -1,4 +1,4 @@
-function [Y] = GetY(X, R)
+function [Y] = GetY(X_chief, X_deputy, R)
 %GetY Generates measurements given the state information X with measurement
 %noise R
 %
@@ -10,27 +10,25 @@ function [Y] = GetY(X, R)
 %   Y - [km, km/s, and rad] (p x N x (n_s - 1)) Matrix containing the chief
 %   satellite's measurements of each deputy satellite
 
-[~, N, n_s] = size(X);
+[~, N] = size(X_chief);
 
 p = 4; % Number of measurements
-Y = zeros(p, N, n_s-1);
+Y = zeros(p, N);
 
 [Sv, pd] = chol(R); % Cholesky factorization and not positive definite flag
 vk = randn(p, N);
 
-for i = 2:n_s
-    rho = sqrt((X(1, :, 1) - X(1, :, i)).^2 + (X(3, :, 1) - X(3, :, i)).^2 + (X(5, :, 1) - X(5, :, i)).^2); % [km]
-    rhodot = ((X(1, :, 1) - X(1, :, i)).*(X(2, :, 1) - X(2, :, i)) + ...
-        (X(3, :, 1) - X(3, :, i)).*(X(4, :, 1) - X(4, :, i)) + ...
-        (X(5, :, 1) - X(5, :, i)).*(X(6, :, 1) - X(6, :, i)))./rho; % [km/s]
-    az = atan2((X(3, :, 1) - X(3, :, i)), (X(1, :, 1) - X(1, :, i))); % [rad]
-    el = atan((X(5, :, 1) - X(5, :, i))./(X(1, :, 1) - X(1, :, i))); % [rad]
-    
-    Y = [rho; rhodot; az; el];
-    
-    if pd == 0 % If R is positive definite
-        Y = Y + Sv*vk;
-    end
+rho = sqrt((X_chief(1, :) - X_deputy(1, :)).^2 + (X_chief(3, :) - X_deputy(3, :)).^2 + (X_chief(5, :) - X_deputy(5, :)).^2); % [km]
+rhodot = ((X_chief(1, :) - X_deputy(1, :)).*(X_chief(2, :) - X_deputy(2, :)) + ...
+    (X_chief(3, :) - X_deputy(3, :)).*(X_chief(4, :) - X_deputy(4, :)) + ...
+    (X_chief(5, :) - X_deputy(5, :)).*(X_chief(6, :) - X_deputy(6, :)))./rho; % [km/s]
+az = atan2((X_chief(3, :) - X_deputy(3, :)), (X_chief(1, :) - X_deputy(1, :))); % [rad]
+el = atan((X_chief(5, :) - X_deputy(5, :))./(X_chief(1, :) - X_deputy(1, :))); % [rad]
+
+Y = [rho; rhodot; az; el];
+
+if pd == 0 % If R is positive definite
+    Y = Y + Sv*vk;
 end
 
 end
