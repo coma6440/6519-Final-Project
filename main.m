@@ -8,16 +8,16 @@
 clear; close all; clc;
 
 % System parameters
-SYSTEM.n = 6; % Number of states
-SYSTEM.N = 940; % Number of time steps
-SYSTEM.dt = 50; % [s] Time step interval
+params.n = 6; % Number of states
+params.N = 940; % Number of time steps
+params.dt = 50; % [s] Time step interval
 
 % Constants
 CONST.mu_E = 3.986e5; % [km^3/s^2] Earth's Gravitational Parameter
 CONST.R_E = 6378; % [km] Earth's Radius
 
 % Noise specifications
-NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
+NOISE.Q = 1e-10 * eye(params.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
 NOISE.R = [ 0.5,    0,      0,      0;
             0,      5e-6,   0,      0;
@@ -29,9 +29,13 @@ NOISE.R = [ 0.5,    0,      0,      0;
 rng(04122021);
 
 % Truth Model
-[t_vec, X, Y] = TruthModelSim(SYSTEM, CONST, NOISE);
+[t_vec, X, Y] = TruthModelSim(params, CONST, NOISE);
 
-SYSTEM.p = length(Y); % Number of measurements
+u = zeros(3,1);
+x_chief = X(:,:,1);
+x_deputy = X(:,:,2);
+
+params.p = length(Y); % Number of measurements
 
 fig = figure;
 fig.WindowState = 'maximized';
@@ -39,10 +43,8 @@ PlotTrajectories(t_vec, X, fig);
 PlotMeasurements(t_vec, Y, fig);
 saveas(fig, 'TM.png')
 
-%% UKF
-%Parameters for UKF
-params.n = 6;
-params.p = 4;
+%% Execute Filters
+%Parameters
 params.Q = 1e-7*[   0,      0,      0,      0,      0,      0;
                     0,      1,      0,      0,      0,      0;
                     0,      0,      0,      0,      0,      0;
@@ -50,304 +52,28 @@ params.Q = 1e-7*[   0,      0,      0,      0,      0,      0;
                     0,      0,      0,      0,      0,      0;
                     0,      0,      0,      0,      0,      1];
 
-% 2.5e-7*eye(6);
-% params.Q(1,1) = 0;
-% params.Q(3,3) = 0;
-% params.Q(5,5) = 0;
-
 params.R = 10 * NOISE.R;
 % params.R = 10*[1,      0,      0,      0;
 %             0,      1e-5,      0,      0;
 %             0,      0,      0.01,    0;
 %             0,      0,      0,      0.01]; % Measurement noise covariance
-params.dt = SYSTEM.dt;
 
-r0 = CONST.R_E + 2000; % [km]
-init_state = [r0+100; 1; 0; 8.75; 0; 0];
-xmUKF = zeros(params.n,SYSTEM.N);
-xpUKF = xmUKF;
-xmUKF(:,1) = init_state;
-xpUKF(:,1) = init_state;
-
-xmPF = zeros(params.n,SYSTEM.N);
-xpPF = xmUKF;
-xmPF(:,1) = init_state;
-xpPF(:,1) = init_state;
-
-PpUKF = 1*eye(6);
-PpUKF(2,2) = 0.0005;
-PpUKF(4,4) = 0.0005;
-PpUKF(6,6) = 0.0005;
-PpPF = PpUKF;
-
-PmUKF = PpUKF;
-u = zeros(3,1);
-x_chief = X(:,:,1);
-x_deputy = X(:,:,2);
-t = 0;
-
-%UKF
-filterUKF = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
-         'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
-         'StateCovariance', PpUKF,...
-         'Alpha', 1e-3);
-%Particle Filter  
-filterPF = trackingPF(@particletransitionfcn, @particlemeasurementfcn, ...
-           init_state, 'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
-           'StateCovariance', PpPF, 'NumParticles', 100);
-
-for k = 1:(length(Y)-1)
-    clc;
-    fprintf('Progress:\t%3.0f %%\n', k/(length(Y)-1)*100);
-    %Prediction step
-    [xmUKF(:,k+1), PmUKF(:,:,k+1)] = predict(filterUKF,params.dt,CONST);
-    [xmPF(:,k+1), PmPF(:,:,k+1)] = predict(filterPF,params.dt,CONST);
-    %Measurement residual
-    [yresUKF(:,k+1), yrescovUKF(:,:,k+1)] = residual(filterUKF, Y(:,k+1), {x_chief(:,k+1), zeros(params.p, params.p)});
-    %[yresPF(:,k+1), yrescovPF(:,:,k+1)] = residual(filterPF, Y(:,k+1), {x_chief(:,k+1), zeros(params.p, params.p)});
-    %Correction step
-    [xpUKF(:,k+1), PpUKF(:,:,k+1)] = correct(filterUKF,Y(:,k+1),x_chief(:,k+1), zeros(params.p, params.p));
-    [xpPF(:,k+1), PpPF(:,:,k+1)] = correct(filterPF,Y(:,k+1),x_chief(:,k+1), zeros(params.p, params.p));
-    %Step time forward
-    t = t + params.dt;
-end
+[UKF, PF] = RunFilters(x_chief, Y, params, CONST);
 
 
 %% State Estimation Errors for UKF
-version_flag = contains(version, '2020');
 
-ex = (xpUKF - x_deputy);
-est_err_fig = figure;
-est_err_fig.Position = [268,98,885,601];
-hold on
-sgtitle('State Estimation Errors - UKF')
-
-if version_flag
-    tiledlayout('flow','TileSpacing','Compact')
-    nexttile
-else
-    subplot(3, 2, 1)
-end
-hold on
-plot(t_vec,ex(1,:))
-plot(t_vec,2*sqrt(squeeze(PpUKF(1,1,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpUKF(1,1,:))),'--k')
-ylabel({'X Position', 'Error [km]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 2)
-end
-hold on
-plot(t_vec,ex(2,:))
-plot(t_vec,2*sqrt(squeeze(PpUKF(2,2,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpUKF(2,2,:))),'--k')
-ylabel({'X Velocity', 'Error [km/s]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 3)
-end
-hold on
-plot(t_vec,ex(3,:))
-plot(t_vec,2*sqrt(squeeze(PpUKF(3,3,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpUKF(3,3,:))),'--k')
-ylabel({'Y Position', 'Error [km]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 4)
-end
-hold on
-plot(t_vec,ex(4,:))
-plot(t_vec,2*sqrt(squeeze(PpUKF(4,4,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpUKF(4,4,:))),'--k')
-ylabel({'Y Velocity', 'Error [km/s]'});
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 5)
-end
-hold on
-plot(t_vec,ex(5,:))
-plot(t_vec,2*sqrt(squeeze(PpUKF(5,5,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpUKF(5,5,:))),'--k')
-xlabel('Time [s]')
-ylabel({'Z Position', 'Error [km]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 6)
-end
-hold on
-plot(t_vec,ex(6,:))
-plot(t_vec,2*sqrt(squeeze(PpUKF(6,6,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpUKF(6,6,:))),'--k')
-xlabel('Time [s]')
-ylabel({'Z Velocity', 'Error [km/s]'});
-grid on
-set(gca, 'FontSize', 14)
-
+est_err_fig = PlotEstErr(t_vec, x_deputy, UKF.xp, UKF.Pp, 'UKF');
 saveas(est_err_fig, 'EstErr_UKF.png')
 
+
 %% Measurement Errors for UKF
-resid_fig = figure;
-hold on
-sgtitle('Measurement Residuals - UKF')
-resid_fig.Position = [268,98,885,601];
-if version_flag
-    tiledlayout('flow','TileSpacing','Compact')
-    nexttile
-else
-    subplot(2, 2, 1)
-end
-hold on
-plot(t_vec,yresUKF(1,:))
-ylabel(["Range Residual", "[km]"])
-grid on
-set(gca, 'FontSize', 14)
 
-if version_flag
-    nexttile
-else
-    subplot(2, 2, 2)
-end
-hold on
-plot(t_vec,yresUKF(2,:))
-ylabel(["Range Rate Residual", "[km/s]"])
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(2, 2, 3)
-end
-hold on
-plot(t_vec,yresUKF(3,:))
-xlabel('Time [s]')
-ylabel(["Azimuth Error", "[rad]"])
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(2, 2, 4)
-end
-hold on
-plot(t_vec,yresUKF(4,:))
-xlabel('Time [s]')
-ylabel(["Elevation Error", "[rad]"])
-grid on
-set(gca, 'FontSize', 14)
-
+resid_fig = PlotMeasInnov(t_vec, UKF.yres, 'UKF');
 saveas(resid_fig, 'ResidualUKF.png')
 
 
 %% State Estimation Errors for PF
-version_flag = contains(version, '2020');
 
-ex = (xpPF - x_deputy);
-est_err_fig = figure;
-est_err_fig.Position = [268,98,885,601];
-hold on
-sgtitle('State Estimation Errors - PF')
-
-if version_flag
-    tiledlayout('flow','TileSpacing','Compact')
-    nexttile
-else
-    subplot(3, 2, 1)
-end
-hold on
-plot(t_vec,ex(1,:))
-plot(t_vec,2*sqrt(squeeze(PpPF(1,1,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpPF(1,1,:))),'--k')
-ylabel({'X Position', 'Error [km]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 2)
-end
-hold on
-plot(t_vec,ex(2,:))
-plot(t_vec,2*sqrt(squeeze(PpPF(2,2,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpPF(2,2,:))),'--k')
-ylabel({'X Velocity', 'Error [km/s]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 3)
-end
-hold on
-plot(t_vec,ex(3,:))
-plot(t_vec,2*sqrt(squeeze(PpPF(3,3,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpPF(3,3,:))),'--k')
-ylabel({'Y Position', 'Error [km]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 4)
-end
-hold on
-plot(t_vec,ex(4,:))
-plot(t_vec,2*sqrt(squeeze(PpPF(4,4,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpPF(4,4,:))),'--k')
-ylabel({'Y Velocity', 'Error [km/s]'});
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 5)
-end
-hold on
-plot(t_vec,ex(5,:))
-plot(t_vec,2*sqrt(squeeze(PpPF(5,5,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpPF(5,5,:))),'--k')
-xlabel('Time [s]')
-ylabel({'Z Position', 'Error [km]'})
-grid on
-set(gca, 'FontSize', 14)
-
-if version_flag
-    nexttile
-else
-    subplot(3, 2, 6)
-end
-hold on
-plot(t_vec,ex(6,:))
-plot(t_vec,2*sqrt(squeeze(PpPF(6,6,:))),'--k')
-plot(t_vec,-2*sqrt(squeeze(PpPF(6,6,:))),'--k')
-xlabel('Time [s]')
-ylabel({'Z Velocity', 'Error [km/s]'});
-grid on
-set(gca, 'FontSize', 14)
-
-saveas(est_err_fig, 'EstErr_PF.png')
+est_err_fig = PlotEstErr(t_vec, x_deputy, PF.xp, PF.Pp, 'Particle Filter');
+saveas(est_err_fig, 'EstErr_PF.png');

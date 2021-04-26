@@ -54,7 +54,7 @@ n_s = 2; % Number of satellites
 for i = 2:n_s
 %     X_deputy = X(:, :, i);
     
-    Y = GetY(X_deputy, X_chief, NOISE.R);
+    Y = measurementfcn(X_deputy, X_chief, NOISE.R);
 end
 
 end
