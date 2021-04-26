@@ -19,40 +19,47 @@ CONST.R_E = 6378; % [km] Earth's Radius
 % Noise specifications
 NOISE.Q = 1e-10 * eye(SYSTEM.n/2); % Process noise covariance
 % NOISE.Q = zeros(SYSTEM.n/2);
-NOISE.R = [ 0.1,    0,      0,      0;
-            0,      0.1,   0,      0;
-            0,      0,      0.01,   0;
-            0,      0,      0,      0.01]; % Measurement noise covariance
+NOISE.R = [ 0.5,    0,      0,      0;
+            0,      5e-6,   0,      0;
+            0,      0,      0.001,   0;
+            0,      0,      0,      0.001]; % Measurement noise covariance
 
 % NOISE.R = zeros(3, 3);
 
-rng(2021);
+rng(04122021);
 
 % Truth Model
-[t, X, Y] = TruthModelSim(SYSTEM, CONST, NOISE);
+[t_vec, X, Y] = TruthModelSim(SYSTEM, CONST, NOISE);
 
 SYSTEM.p = length(Y); % Number of measurements
 
 fig = figure;
 fig.WindowState = 'maximized';
-PlotTrajectories(t, X, fig);
-PlotMeasurements(t, Y, fig);
+PlotTrajectories(t_vec, X, fig);
+PlotMeasurements(t_vec, Y, fig);
 saveas(fig, 'TM.png')
 
 %% UKF
 %Parameters for UKF
 params.n = 6;
 params.p = 4;
-params.Q = 2.5e-7*eye(6);
+params.Q = 1e-7*[   0,      0,      0,      0,      0,      0;
+                    0,      1,      0,      0,      0,      0;
+                    0,      0,      0,      0,      0,      0;
+                    0,      0,      0,      1,      0,      0;
+                    0,      0,      0,      0,      0,      0;
+                    0,      0,      0,      0,      0,      1];
+
+% 2.5e-7*eye(6);
 % params.Q(1,1) = 0;
 % params.Q(3,3) = 0;
 % params.Q(5,5) = 0;
 
-% params.R = NOISE.R;
-params.R = [1,      0,      0,      0;
-            0,      1,      0,      0;
-            0,      0,      0.1,    0;
-            0,      0,      0,      0.1]; % Measurement noise covariance
+params.R = 10 * NOISE.R;
+% params.R = 10*[1,      0,      0,      0;
+%             0,      1e-5,      0,      0;
+%             0,      0,      0.01,    0;
+%             0,      0,      0,      0.01]; % Measurement noise covariance
 params.dt = SYSTEM.dt;
 
 r0 = CONST.R_E + 2000; % [km]
@@ -77,19 +84,21 @@ PmUKF = PpUKF;
 u = zeros(3,1);
 x_chief = X(:,:,1);
 x_deputy = X(:,:,2);
-t_vec = t;
 t = 0;
+
 %UKF
-filterUKF = trackingUKF(@transitionfcn, @GetY, init_state, ...
+filterUKF = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
          'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
          'StateCovariance', PpUKF,...
          'Alpha', 1e-3);
 %Particle Filter  
 filterPF = trackingPF(@particletransitionfcn, @particlemeasurementfcn, ...
            init_state, 'ProcessNoise', params.Q, 'MeasurementNoise', NOISE.R,...
-           'StateCovariance', PpPF, 'NumParticles', 500);
+           'StateCovariance', PpPF, 'NumParticles', 100);
 
 for k = 1:(length(Y)-1)
+    clc;
+    fprintf('Progress:\t%3.0f %%\n', k/(length(Y)-1)*100);
     %Prediction step
     [xmUKF(:,k+1), PmUKF(:,:,k+1)] = predict(filterUKF,params.dt,CONST);
     [xmPF(:,k+1), PmPF(:,:,k+1)] = predict(filterPF,params.dt,CONST);
@@ -111,7 +120,7 @@ ex = (xpUKF - x_deputy);
 est_err_fig = figure;
 est_err_fig.Position = [268,98,885,601];
 hold on
-sgtitle('State Estimation Errors')
+sgtitle('State Estimation Errors - UKF')
 
 if version_flag
     tiledlayout('flow','TileSpacing','Compact')
@@ -199,7 +208,7 @@ saveas(est_err_fig, 'EstErr_UKF.png')
 %% Measurement Errors for UKF
 resid_fig = figure;
 hold on
-sgtitle('Measurement Residuals')
+sgtitle('Measurement Residuals - UKF')
 resid_fig.Position = [268,98,885,601];
 if version_flag
     tiledlayout('flow','TileSpacing','Compact')
@@ -258,7 +267,7 @@ ex = (xpPF - x_deputy);
 est_err_fig = figure;
 est_err_fig.Position = [268,98,885,601];
 hold on
-sgtitle('State Estimation Errors')
+sgtitle('State Estimation Errors - PF')
 
 if version_flag
     tiledlayout('flow','TileSpacing','Compact')

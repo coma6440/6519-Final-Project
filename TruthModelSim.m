@@ -21,7 +21,8 @@ t_vec = dt*k; % [s] Time vector
 
 % Initial Conditions
 r0 = CONST.R_E + 2000; % [km]
-x0_C = [r0; 0; 0; 9; 0; 0];
+x0_C = [r0; 0; 0; 2.57; 0; 7.05];
+% x0_C = [r0; 0; 0; 7.5; 0; 0];
 x0_D = [r0+100; 1; 0; 8.75; 0; 0];
 
 % x0_C = [r0; 0; 0; 9]; % Chief satellite
