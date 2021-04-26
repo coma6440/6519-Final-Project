@@ -18,13 +18,13 @@ CONST.R_E = 6378; % [km] Earth's Radius
 
 % Noise specifications
 NOISE.Q = 1e-10 * eye(params.n/2); % Process noise covariance
-% NOISE.Q = zeros(SYSTEM.n/2);
+% NOISE.Q = zeros(params.n/2);
 NOISE.R = [ 0.5,    0,      0,      0;
             0,      5e-6,   0,      0;
             0,      0,      0.001,   0;
             0,      0,      0,      0.001]; % Measurement noise covariance
 
-% NOISE.R = zeros(3, 3);
+% NOISE.R = zeros(4);
 
 rng(04122021);
 
@@ -35,7 +35,7 @@ u = zeros(3,1);
 x_chief = X(:,:,1);
 x_deputy = X(:,:,2);
 
-params.p = length(Y); % Number of measurements
+params.p = size(Y, 1); % Number of measurements
 
 fig = figure;
 fig.WindowState = 'maximized';
@@ -45,7 +45,7 @@ saveas(fig, 'TM.png')
 
 %% Execute Filters
 %Parameters
-params.Q = 1e-7*[   0,      0,      0,      0,      0,      0;
+params.Q = 1e-6*[   0,      0,      0,      0,      0,      0;
                     0,      1,      0,      0,      0,      0;
                     0,      0,      0,      0,      0,      0;
                     0,      0,      0,      1,      0,      0;
@@ -55,7 +55,7 @@ params.Q = 1e-7*[   0,      0,      0,      0,      0,      0;
 params.R = 10 * NOISE.R;
 % params.R = 10*[1,      0,      0,      0;
 %             0,      1e-5,      0,      0;
-%             0,      0,      0.01,    0;
+%             0,      0,      0.01,    0; 
 %             0,      0,      0,      0.01]; % Measurement noise covariance
 
 [UKF, PF] = RunFilters(x_chief, Y, params, CONST);
@@ -75,5 +75,6 @@ saveas(resid_fig, 'ResidualUKF.png')
 
 %% State Estimation Errors for PF
 
-est_err_fig = PlotEstErr(t_vec, x_deputy, PF.xp, PF.Pp, 'Particle Filter');
+PF_vec = VectorizeResults(PF);
+est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_mmse, PF_vec.P, 'Particle Filter, N_s = 1000');
 saveas(est_err_fig, 'EstErr_PF.png');
