@@ -9,7 +9,12 @@ w_cdf = cumsum(X_kp1.w);
 for i = 1:Ns
     pSamp = rand;
     ii = find(pSamp < w_cdf, 1);
-    x_resamp(:, i) = X_kp1.x(:, ii);
+    
+    if ~isempty(ii)
+        x_resamp(:, i) = X_kp1.x(:, ii);
+    else
+        x_resamp(:, i) = NaN*ones(n, 1);
+    end
 end
 
 %Adaptive Injection

@@ -46,8 +46,6 @@ for k = 1:params.N-1
     pf_kp1.Neff = 1/(sum((X_kp1.w).^2));
     PF(k+1) = pf_kp1;
     
-%     plot(X_kp1.w, 'o', 'LineWidth', 2)
-    
     X_kp1 = Resample(X_kp1, w_fast, w_slow, nu);
     X_k = X_kp1;
     

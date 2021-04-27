@@ -45,19 +45,24 @@ saveas(fig, 'TM.png')
 
 %% Execute Filters
 %Parameters
-params.Q = 1e-6*[   0,      0,      0,      0,      0,      0;
-                    0,      1,      0,      0,      0,      0;
-                    0,      0,      0,      0,      0,      0;
-                    0,      0,      0,      1,      0,      0;
-                    0,      0,      0,      0,      0,      0;
-                    0,      0,      0,      0,      0,      1];
+params.UKF.Q = 1e-7*[   0,      0,      0,      0,      0,      0;
+                        0,      1,      0,      0,      0,      0;
+                        0,      0,      0,      0,      0,      0;
+                        0,      0,      0,      1,      0,      0;
+                        0,      0,      0,      0,      0,      0;
+                        0,      0,      0,      0,      0,      1];
+                    
+params.PF.Q = 1e-6*[    0,      0,      0,      0,      0,      0;
+                        0,      1,      0,      0,      0,      0;
+                        0,      0,      0,      0,      0,      0;
+                        0,      0,      0,      1,      0,      0;
+                        0,      0,      0,      0,      0,      0;
+                        0,      0,      0,      0,      0,      1];
 
-params.R = 10 * NOISE.R;
-% params.R = 10*[1,      0,      0,      0;
-%             0,      1e-5,      0,      0;
-%             0,      0,      0.01,    0; 
-%             0,      0,      0,      0.01]; % Measurement noise covariance
+params.UKF.R = 10 * NOISE.R;
+params.PF.R = 10 * NOISE.R;
 
+params.Ns = 1000; % Number of samples
 [UKF, PF] = RunFilters(x_chief, Y, params, CONST);
 
 
@@ -76,17 +81,27 @@ saveas(resid_fig, 'ResidualUKF.png')
 %% State Estimation Errors for PF
 
 PF_vec = VectorizeResults(PF);
-est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_mmse, PF_vec.P, 'Particle Filter, N_s = 1000');
+est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_mmse, PF_vec.P, sprintf('Particle Filter MMSE, N_s = %d', params.Ns));
 saveas(est_err_fig, 'EstErr_PF_MMSE.png');
 
 PF_vec = VectorizeResults(PF);
-est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_map, PF_vec.P, 'Particle Filter, N_s = 1000');
+est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_map, PF_vec.P, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
 saveas(est_err_fig, 'EstErr_PF_MAP.png');
+
+Neff_fig = figure;
+hold on
+grid on
+xlabel('Time [s]')
+ylabel('Effective Sample Size, N_{eff}')
+title('Effective Sample Size vs Time')
+plot(t_vec, PF_vec.Neff, 'x', 'LineWidth', 2)
+set(gca, 'FontSize', 14)
+saveas(Neff_fig, 'Neff_PF.png')
 
 %% Measurement Errors for PF
 %MMSE
-resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_mmse, 'PF MMSE');
+resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_mmse, sprintf('PF MMSE, N_s = %d', params.Ns));
 saveas(resid_fig, 'ResidualPF_MMSE.png')
 %MAP
-resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_map, 'PF MAP');
+resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_map, sprintf('PF MAP, N_s = %d', params.Ns));
 saveas(resid_fig, 'ResidualPF_MAP.png')

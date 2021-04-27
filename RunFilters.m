@@ -21,7 +21,7 @@ t = 0;
 
 %UKF
 filterUKF = trackingUKF(@transitionfcn, @measurementfcn, init_state, ...
-         'ProcessNoise', params.Q, 'MeasurementNoise', params.R,...
+         'ProcessNoise', params.UKF.Q, 'MeasurementNoise', params.UKF.R,...
          'StateCovariance', UKF.Pp,...
          'Alpha', 1e-3);
      
@@ -37,22 +37,29 @@ for k = 1:(length(Y)-1)
     
     %Prediction step
     [UKF.xm(:,k+1), UKF.Pm(:,:,k+1)] = predict(filterUKF, params.dt, CONST);
-%     [PF.xm(:,k+1), PF.Pm(:,:,k+1)] = predict(filterPF, params.dt, CONST);
     
-    %Measurement residual
-    [UKF.yres(:,k+1), UKF.Sk(:,:,k+1)] = residual(filterUKF, Y(:,k+1), {x_chief(:,k+1), zeros(params.p, params.p)});
-    %[PF.yres(:,k+1), PF.Sk(:,:,k+1)] = residual(filterPF, Y(:,k+1), {x_chief(:,k+1), zeros(params.p, params.p)});
-    
-    %Correction step
-    [UKF.xp(:,k+1), UKF.Pp(:,:,k+1)] = correct(filterUKF,Y(:,k+1), x_chief(:,k+1), zeros(params.p, params.p));
-%     [PF.xp(:,k+1), PF.Pp(:,:,k+1)] = correct(filterPF,Y(:,k+1), x_chief(:,k+1), zeros(params.p, params.p));
+    if ~isnan(Y(:, k+1)) % If a valid measurement is taken
+        
+        %Correction step
+        [UKF.xp(:,k+1), UKF.Pp(:,:,k+1)] = correct(filterUKF,Y(:,k+1), x_chief(:,k+1), zeros(params.p, params.p));
+
+        %Measurement residual
+        [UKF.yres(:,k+1), UKF.Sk(:,:,k+1)] = residual(filterUKF, Y(:,k+1), {x_chief(:,k+1), zeros(params.p, params.p)});
+        
+    else
+        
+        UKF.xp(:, k+1) = UKF.xm(:, k+1);
+        UKF.Pp(:, :, k+1) = UKF.Pm(:, :, k+1);
+        UKF.yres(:, k+1) = NaN;
+        UKF.Sk(:, :, k+1) = NaN;
+        
+    end
     
     %Step time forward
     t = t + params.dt;
 end
 
-Ns = 500;
-PF = RunPF(x_chief, Y, params, CONST, Ns);
+PF = RunPF(x_chief, Y, params, CONST, params.Ns);
 
 end
 

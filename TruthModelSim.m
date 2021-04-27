@@ -49,13 +49,42 @@ X(:, :, 2) = X_deputy;
 
 % Measurements
 n_s = 2; % Number of satellites
-% X_chief = X(:, :, 1);
 
 for i = 2:n_s
-%     X_deputy = X(:, :, i);
-    
     Y = measurementfcn(X_deputy, X_chief, NOISE.R);
 end
+
+% Determine if the Line of Sight is obstructed
+X1 = [X_chief(1, :); X_chief(3, :); X_chief(5, :)]; % [km] Position vector of the chief satellite
+X2 = [X_deputy(1, :); X_deputy(3, :); X_deputy(5, :)]; % [km] Position vector of the deputy satellite
+pt = [0; 0; 0]; % Point to find the distance to
+LOS = X2 - X1; % Line of sight vector
+
+V_pt_LOS = cross(cross(pt - X1, LOS), LOS); % Vector w/ minimum distance from pt to LOS
+% Normalize each vector if the magnitude of V_pt_LOS is non-zero
+V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0) = V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0)./vecnorm(V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0)); % Unit LOS vector
+
+% Calculate the distance between pt and LOS if the magnitude of V_pt_LOS is
+% non-zero
+d_pt_LOS = vecnorm(cross(X1, LOS))./vecnorm(LOS); % [km] Distance from pt to LOS
+
+pt_LOS = d_pt_LOS.*V_pt_LOS; % [km] Point in 3D space on LOS closest to pt
+
+% Calculate the value of t in the equation:
+%   pt_LOS = X1 + t * LOS
+% to determine whether the shortest distance occurs between the satellites
+% (Corresponds to t = [0, 1]
+t = (pt_LOS - X1)./LOS;
+
+bool_valid_rng_prm = zeros(1, size(Y, 2));
+% bool_valid_rng_prm(1, :) = abs(t(1, :) - t(2, :)) < 1e-12;
+% bool_valid_rng_prm(2, :) = abs(t(1, :) - t(3, :)) < 1e-12;
+bool_valid_rng_prm = d_pt_LOS > CONST.R_E | t(1, :) < 0 | t(1, :) > 1;
+
+valid_rng_prm = double(bool_valid_rng_prm);
+
+valid_rng_prm(valid_rng_prm == 0) = NaN;
+Y = Y.*valid_rng_prm;
 
 end
 
