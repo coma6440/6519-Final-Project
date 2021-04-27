@@ -77,4 +77,16 @@ saveas(resid_fig, 'ResidualUKF.png')
 
 PF_vec = VectorizeResults(PF);
 est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_mmse, PF_vec.P, 'Particle Filter, N_s = 1000');
-saveas(est_err_fig, 'EstErr_PF.png');
+saveas(est_err_fig, 'EstErr_PF_MMSE.png');
+
+PF_vec = VectorizeResults(PF);
+est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_map, PF_vec.P, 'Particle Filter, N_s = 1000');
+saveas(est_err_fig, 'EstErr_PF_MAP.png');
+
+%% Measurement Errors for PF
+%MMSE
+resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_mmse, 'PF MMSE');
+saveas(resid_fig, 'ResidualPF_MMSE.png')
+%MAP
+resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_map, 'PF MAP');
+saveas(resid_fig, 'ResidualPF_MAP.png')

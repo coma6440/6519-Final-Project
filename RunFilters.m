@@ -51,7 +51,7 @@ for k = 1:(length(Y)-1)
     t = t + params.dt;
 end
 
-Ns = 1000;
+Ns = 500;
 PF = RunPF(x_chief, Y, params, CONST, Ns);
 
 end
