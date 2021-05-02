@@ -28,12 +28,20 @@ NOISE.R = [ 0.5,    0,      0,      0;
 
 rng(04122021);
 
+% Initial Conditions
+r0 = CONST.R_E + 2000; % [km]
+x0_C = [r0; 0; 0; 2.57; 0; 7.05];
+% x0_C = [r0; 0; 0; 7.5; 0; 0];
+x0_D = [r0+100; 1; 0; 8.75; 0; 0];
+x0_E = [r0 - 200; 1; 0; 8.75; 0; 0];
+
 % Truth Model
 [t_vec, X, Y] = TruthModelSim(params, CONST, NOISE);
 
 u = zeros(3,1);
 x_chief = X(:,:,1);
 x_deputy = X(:,:,2);
+x_eputy = X(:,:,3);
 
 params.p = size(Y, 1); % Number of measurements
 
@@ -62,45 +70,7 @@ params.PF.Q = 1e-6*[    0,      0,      0,      0,      0,      0;
 params.UKF.R = 10 * NOISE.R;
 params.PF.R = 10 * NOISE.R;
 
-params.Ns = 1000; % Number of samples
-[UKF, PF] = RunFilters(x_chief, Y, params, CONST);
+params.Ns = 500; % Number of samples
+[UKF, PF] = RunRBPF(x_chief, Y, params, CONST);
 
 
-%% State Estimation Errors for UKF
-
-est_err_fig = PlotEstErr(t_vec, x_deputy, UKF.xp, UKF.Pp, 'UKF');
-saveas(est_err_fig, 'EstErr_UKF.png')
-
-
-%% Measurement Errors for UKF
-
-resid_fig = PlotMeasInnov(t_vec, UKF.yres, 'UKF');
-saveas(resid_fig, 'ResidualUKF.png')
-
-
-%% State Estimation Errors for PF
-
-PF_vec = VectorizeResults(PF);
-est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_mmse, PF_vec.P, sprintf('Particle Filter MMSE, N_s = %d', params.Ns));
-saveas(est_err_fig, 'EstErr_PF_MMSE.png');
-
-est_err_fig = PlotEstErr(t_vec, x_deputy, PF_vec.x_map, PF_vec.P, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
-saveas(est_err_fig, 'EstErr_PF_MAP.png');
-
-Neff_fig = figure;
-hold on
-grid on
-xlabel('Time [s]')
-ylabel('Effective Sample Size, N_{eff}')
-title('Effective Sample Size vs Time')
-plot(t_vec, PF_vec.Neff, 'x', 'LineWidth', 2)
-set(gca, 'FontSize', 14)
-saveas(Neff_fig, 'Neff_PF.png')
-
-%% Measurement Errors for PF
-%MMSE
-resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_mmse, sprintf('PF MMSE, N_s = %d', params.Ns));
-saveas(resid_fig, 'ResidualPF_MMSE.png')
-%MAP
-resid_fig = PlotMeasInnov(t_vec, PF_vec.y_res_map, sprintf('PF MAP, N_s = %d', params.Ns));
-saveas(resid_fig, 'ResidualPF_MAP.png')

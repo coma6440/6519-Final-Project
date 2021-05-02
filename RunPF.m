@@ -1,9 +1,6 @@
-function [PF] = RunPF(x_chief, Y, params, CONST, Ns)
+function [PF] = RunPF(x_chief, Y, params, CONST, Ns, init_state)
 %RunPF Runs the Particle Filter to estimate the deputy satellite states
 %over time given the chief satellite's states and the relative measurements
-
-r0 = CONST.R_E + 2000; % [km]
-init_state = [r0+100; 1; 0; 8.75; 0; 0];
 
 pf0.x_mmse = NaN*zeros(params.n, 1);
 pf0.y_res_mmse = NaN*zeros(params.p, 1);
