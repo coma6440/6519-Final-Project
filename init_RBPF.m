@@ -1,5 +1,5 @@
 function RBPF = init_RBPF(CONST, params)
-Ns = 500;
+Ns = 100;
 r0 = CONST.R_E + 2000; % [km]
 pf0.x_mmse = NaN*zeros(params.n, 1);
 pf0.y_res_mmse = NaN*zeros(params.p, 1);

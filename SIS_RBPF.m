@@ -8,7 +8,7 @@ for i = 1:Ns
     pp1(i).w = 0;
 end
 
-for i = 1:Ns
+parfor i = 1:Ns
     mu_q = transitionfcn(particles(i).x_t, params.dt, CONST);
     pp1(i).x_t = mvnrnd(mu_q, params.PF.Q)';
 
@@ -30,7 +30,7 @@ end
 w_total = sum([pp1(:).w]);
 
 if w_total ~= 0
-    for i = 1:Ns
+    parfor i = 1:Ns
         pp1(i).w = pp1(i).w/w_total;
     end
 else
