@@ -69,8 +69,8 @@ params.PF.Q = 1e-6*[    0,      0,      0,      0,      0,      0;
 
 params.UKF.R = 10 * NOISE.R;
 params.PF.R = 10 * NOISE.R;
-
 params.Ns = 500; % Number of samples
-[UKF, PF] = RunRBPF(x_chief, Y, params, CONST);
+x_meas = x_chief;
+[RBPF] = RunRBPF(x_meas, Y, params, CONST);
 
 
