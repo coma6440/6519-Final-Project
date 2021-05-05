@@ -21,9 +21,11 @@ function new_particles = RBPF_resample(particles)
 % Cull dead particles
 particles([particles(:).w] < 1e-5) = [];
 w_total = sum([particles(:).w]);
+% Renormalize
 for i = 1:length(particles)
     particles(i).w = particles(i).w/w_total;
 end
+% Resample
 new_particles = particles;
 w_cdf = cumsum([particles(:).w]);
 while length(new_particles) < 100

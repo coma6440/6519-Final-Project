@@ -4,10 +4,11 @@ rbpfkp1.particles = particles;
 % MMSE
 rbpfkp1.x_mmse = RBPF_MMSE(particles, 'xp');
 rbpfkp1.xt_mmse = RBPF_MMSE(particles, 'x_t');
-rbpfkp1.y_res_mmse = y_e - measurementfcn(rbpfkp1.x_mmse, rbpfkp1.xt_mmse, zeros(params.p));
 % MAP
 rbpfkp1.x_map = RBPF_MAP(particles, 'xp');
 rbpfkp1.xt_map = RBPF_MAP(particles, 'x_t');
+% Measurement Residueals
+rbpfkp1.y_res_mmse = y_e - measurementfcn(rbpfkp1.x_mmse, rbpfkp1.xt_mmse, zeros(params.p));
 rbpfkp1.y_res_map = y_e - measurementfcn(rbpfkp1.x_map, rbpfkp1.xt_map, zeros(params.p));
 % Other Stuff
 rbpfkp1.P = RBPF_cov(particles, rbpfkp1.x_mmse);

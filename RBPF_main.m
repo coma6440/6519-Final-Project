@@ -79,51 +79,70 @@ params.PF.R = 10 * NOISE.R;
 params.Ns = 100; % Number of samples
 % x_meas = x_chief;
 [RBPF] = RunRBPF(Y, params, CONST);
-x_hat = [RBPF(:).x_mmse];
+x_mmse = [RBPF(:).x_mmse];
+x_map = [RBPF(:).x_map];
 P = cat(3,RBPF(:).P);
 xt_hat = [RBPF(:).xt_mmse];
+y_res_mmse = [RBPF(:).y_res_mmse];
+y_res_map = [RBPF(:).y_res_map];
+Neff = [RBPF(:).Neff];
 
-figure
-tiledlayout('flow')
-nexttile
-hold on
-plot(t_vec, x_hat(1,:) - x_deputy(1,:))
-plot(t_vec, 2*sqrt(squeeze(P(1,1,:))),'--k');
-plot(t_vec, -2*sqrt(squeeze(P(1,1,:))),'--k');
-xlabel('time [s]')
-ylabel('X Error')
+%% State Estimation Errors
+% MMSE
+est_err_fig = PlotEstErr(t_vec, x_deputy, x_mmse, P, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
+saveas(est_err_fig, 'EstErr_RBPF_MMSE.png');
 
-nexttile
-hold on
-plot(t_vec, x_hat(3,:) - x_deputy(3,:))
-plot(t_vec, 2*sqrt(squeeze(P(3,3,:))),'--k');
-plot(t_vec, -2*sqrt(squeeze(P(3,3,:))),'--k');
-xlabel('time [s]')
-ylabel('Y Error')
+% MAP
+est_err_fig = PlotEstErr(t_vec, x_deputy, x_map, P, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
+saveas(est_err_fig, 'EstErr_RBPF_MAP.png');
 
-nexttile
-hold on
-plot(t_vec, x_hat(5,:) - x_deputy(5,:))
-plot(t_vec, 2*sqrt(squeeze(P(5,5,:))),'--k');
-plot(t_vec, -2*sqrt(squeeze(P(5,5,:))),'--k');
-xlabel('time [s]')
-ylabel('Z Error')
-
+% Chief Satellite
 figure
 tiledlayout('flow')
 nexttile
 plot(t_vec, xt_hat(1,:) - x_chief(1,:))
-xlabel('time [s]')
-ylabel('X Error')
+xlabel('Time [s]')
+ylabel('X Position Error [km]')
+
+nexttile
+plot(t_vec, xt_hat(2,:) - x_chief(2,:))
+xlabel('Time [s]')
+ylabel('X Velocity Error [km/s]')
+
 nexttile
 plot(t_vec, xt_hat(3,:) - x_chief(3,:))
-xlabel('time [s]')
-ylabel('Y Error')
+xlabel('Time [s]')
+ylabel('Y Position Error [km]')
+
+nexttile
+plot(t_vec, xt_hat(4,:) - x_chief(4,:))
+xlabel('Time [s]')
+ylabel('Y Velocity Error [km/s]')
+
 nexttile
 plot(t_vec, xt_hat(5,:) - x_chief(5,:))
-xlabel('time [s]')
-ylabel('Z Error')
+xlabel('Time [s]')
+ylabel('Z Position Error [km]')
 
+nexttile
+plot(t_vec, xt_hat(6,:) - x_chief(6,:))
+xlabel('Time [s]')
+ylabel('Z Velocity Error [km/s]')
 
+%% Measurement Residuals
+% MMSE
+resid_fig = PlotMeasInnov(t_vec, y_res_mmse, sprintf('PF MMSE, N_s = %d', params.Ns));
+saveas(resid_fig, 'ResidualRBPF_MMSE.png')
+% MAP
+resid_fig = PlotMeasInnov(t_vec, y_res_map, sprintf('PF MAP, N_s = %d', params.Ns));
+saveas(resid_fig, 'ResidualRBPF_MAP.png')
 
-
+%% Effective Sample Size
+Neff_fig = figure;
+hold on
+grid on
+xlabel('Time [s]')
+ylabel('Effective Sample Size, N_{eff}')
+plot(t_vec, Neff, 'x', 'LineWidth', 2)
+set(gca, 'FontSize', 14)
+saveas(Neff_fig, 'Neff_RBPF.png')

@@ -31,7 +31,7 @@ parfor i = 1:Ns
         pp1(i).w = particles(i).w;
     end
     
-    pp1(i).UKF = particles(i).UKF;
+    pp1(i).UKF = clone(particles(i).UKF);
 end
 
 w_total = sum([pp1(:).w]);
