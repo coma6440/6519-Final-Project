@@ -72,7 +72,7 @@ rough = 0.1e-6*[    0,      0,      0,      0,      0,      0;
                   0,      0,      0,      1,      0,      0;
                   0,      0,      0,      0,      0,      0;
                   0,      0,      0,      0,      0,      1];
-params.PF.Q = params.PF.Q + rough;
+params.PF.Q = params.PF.Q;
 
 params.UKF.R = 10 * NOISE.R;
 params.PF.R = 10 * NOISE.R;
@@ -145,4 +145,4 @@ xlabel('Time [s]')
 ylabel('Effective Sample Size, N_{eff}')
 plot(t_vec, Neff, 'x', 'LineWidth', 2)
 set(gca, 'FontSize', 14)
-saveas(Neff_fig, 'Neff_RBPF.png')
+saveas(Neff_fig, 'Neff_RBPF_single.png')
