@@ -10,9 +10,9 @@ pf0.P(2,2) = 0.0005;
 pf0.P(4,4) = 0.0005;
 pf0.P(6,6) = 0.0005;
 pf0.Neff = Ns;
-init_state_xt = [r0+100; 1; 0; 8.75; 0; 0];
+init_state_xt = [r0; 0; 0; 2.57; 0; 7.05];
 
-init_state_xe = [r0-200; 1; 0; 8.75; 0; 0];
+init_state_xe = [r0+100; 1; 0; 8.75; 0; 0];
 UKF.xm = zeros(params.n, params.N);
 UKF.xp = UKF.xm;
 UKF.xm(:,1) = init_state_xt;
@@ -37,6 +37,8 @@ for i = 1:Ns
     particles(i).Pm = Pm;
     particles(i).UKF = clone(filterUKF);
 end
+pf0.xt_mmse = init_state_xt;
+pf0.xt_map = init_state_xt;
 pf0.particles = particles;
 RBPF = pf0;
 end

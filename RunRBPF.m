@@ -1,4 +1,4 @@
-function [RBPF] = RunRBPF(x_meas, Y, params, CONST)
+function [RBPF] = RunRBPF(Y, params, CONST)
 %RunFilters Executes the UKF and PF for each time in t_vec with
 %corresponding measurement in Y
 
@@ -12,9 +12,8 @@ for k = 1:(length(Y)-1)
     fprintf('RBPF Progress:\t%3.0f %%\n', k/(length(Y)-1)*100);
     
     %Prediction step
-    y_t = Y(:, k+1, 1);
-    y_e = Y(:, k+1, 2);
-    RBPF = step_RBPF(RBPF, x_meas(:,k+1), y_t, y_e, params, CONST);
+    y_e = Y(:, k+1);
+    RBPF = step_RBPF(RBPF, y_e, params, CONST);
     
     
     %Step time forward
