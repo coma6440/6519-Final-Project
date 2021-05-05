@@ -32,7 +32,8 @@ while length(new_particles) < 100
     pSamp = rand;
     ii = find(pSamp <= w_cdf, 1);
     new_particles(end + 1) = particles(ii);
-    new_particles(end).UKF = clone(particles(ii).UKF);
+    new_particles(end).UKF1 = clone(particles(ii).UKF1);
+    new_particles(end).UKF2 = clone(particles(ii).UKF2);
 end
 
 for i = 1:length(new_particles)

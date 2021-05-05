@@ -12,8 +12,9 @@ for k = 1:(length(Y)-1)
     fprintf('RBPF Progress:\t%3.0f %%\n', k/(length(Y)-1)*100);
     
     %Prediction step
-    y_e = Y(:, k+1);
-    RBPF = step_RBPF(RBPF, y_e, params, CONST);
+    y_e1 = Y(:, k+1, 1);
+    y_e2 = Y(:, k+1, 2);
+    RBPF = step_RBPF(RBPF, y_e1, y_e2, params, CONST);
     
     
     %Step time forward

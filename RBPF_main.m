@@ -40,7 +40,8 @@ x0_D = [r0+100; 1; 0; 8.75; 0; 0];
 
 u = zeros(3,1);
 x_chief = X(:,:,1);
-x_deputy = X(:,:,2);
+x_deputy1 = X(:,:,2);
+x_deputy2 = X(:,:,3);
 
 params.p = size(Y, 1); % Number of measurements
 
@@ -79,22 +80,33 @@ params.PF.R = 10 * NOISE.R;
 params.Ns = 100; % Number of samples
 % x_meas = x_chief;
 [RBPF] = RunRBPF(Y, params, CONST);
-x_mmse = [RBPF(:).x_mmse];
-x_map = [RBPF(:).x_map];
-P = cat(3,RBPF(:).P);
+x_mmse1 = [RBPF(:).x_mmse1];
+x_mmse2 = [RBPF(:).x_mmse2];
+x_map1 = [RBPF(:).x_map1];
+x_map2 = [RBPF(:).x_map2];
+P1 = cat(3,RBPF(:).P1);
+P2 = cat(3,RBPF(:).P2);
 xt_hat = [RBPF(:).xt_mmse];
-y_res_mmse = [RBPF(:).y_res_mmse];
-y_res_map = [RBPF(:).y_res_map];
+y_res_mmse1 = [RBPF(:).y_res_mmse1];
+y_res_mmse2 = [RBPF(:).y_res_mmse2];
+y_res_map1 = [RBPF(:).y_res_map1];
+y_res_map2 = [RBPF(:).y_res_map2];
 Neff = [RBPF(:).Neff];
 
 %% State Estimation Errors
 % MMSE
-est_err_fig = PlotEstErr(t_vec, x_deputy, x_mmse, P, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
-saveas(est_err_fig, 'EstErr_RBPF_MMSE.png');
+est_err_fig1 = PlotEstErr(t_vec, x_deputy1, x_mmse1, P1, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
+saveas(est_err_fig1, 'EstErr_RBPF_MMSE1.png');
+
+est_err_fig2 = PlotEstErr(t_vec, x_deputy2, x_mmse2, P2, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
+saveas(est_err_fig2, 'EstErr_RBPF_MMSE2.png');
 
 % MAP
-est_err_fig = PlotEstErr(t_vec, x_deputy, x_map, P, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
-saveas(est_err_fig, 'EstErr_RBPF_MAP.png');
+est_err_fig1 = PlotEstErr(t_vec, x_deputy1, x_map1, P1, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
+saveas(est_err_fig1, 'EstErr_RBPF_MAP1.png');
+
+est_err_fig2 = PlotEstErr(t_vec, x_deputy2, x_map2, P2, sprintf('Particle Filter MAP, N_s = %d', params.Ns));
+saveas(est_err_fig2, 'EstErr_RBPF_MAP2.png');
 
 % Chief Satellite
 figure
@@ -131,12 +143,17 @@ ylabel('Z Velocity Error [km/s]')
 
 %% Measurement Residuals
 % MMSE
-resid_fig = PlotMeasInnov(t_vec, y_res_mmse, sprintf('PF MMSE, N_s = %d', params.Ns));
-saveas(resid_fig, 'ResidualRBPF_MMSE.png')
-% MAP
-resid_fig = PlotMeasInnov(t_vec, y_res_map, sprintf('PF MAP, N_s = %d', params.Ns));
-saveas(resid_fig, 'ResidualRBPF_MAP.png')
+resid_fig1 = PlotMeasInnov(t_vec, y_res_mmse1, sprintf('PF MMSE, N_s = %d', params.Ns));
+saveas(resid_fig1, 'ResidualRBPF_MMSE1.png')
 
+resid_fig2 = PlotMeasInnov(t_vec, y_res_mmse2, sprintf('PF MMSE, N_s = %d', params.Ns));
+saveas(resid_fig2, 'ResidualRBPF_MMSE2.png')
+% MAP
+resid_fig1 = PlotMeasInnov(t_vec, y_res_map1, sprintf('PF MAP, N_s = %d', params.Ns));
+saveas(resid_fig1, 'ResidualRBPF_MAP1.png')
+
+resid_fig2 = PlotMeasInnov(t_vec, y_res_map2, sprintf('PF MAP, N_s = %d', params.Ns));
+saveas(resid_fig2, 'ResidualRBPF_MAP2.png')
 %% Effective Sample Size
 Neff_fig = figure;
 hold on

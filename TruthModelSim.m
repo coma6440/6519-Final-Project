@@ -25,7 +25,7 @@ x0_C = [r0; 0; 0; 2.57; 0; 7.05];
 % x0_C = [r0; 0; 0; 7.5; 0; 0];
 x0_D = [r0+100; 1; 0; 8.75; 0; 0];
 
-% x0_E = [r0-200; 1; 0; 8.75; 0; 0];
+x0_E = [r0-200; 1; 0; 8.75; 0; 0];
 
 % x0_C = [r0; 0; 0; 9]; % Chief satellite
 % x0_D = [r0 + 50; 2.5; 0; 8.5]; % Deputy satellite
@@ -36,30 +36,26 @@ x0_D = [r0+100; 1; 0; 8.75; 0; 0];
 % Noise
 w_tilde(:, :, 1) = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
 w_tilde(:, :, 2) = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
-% w_tilde(:, :, 3) = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
+w_tilde(:, :, 3) = mvnrnd(zeros(SYSTEM.n/2, 1), NOISE.Q, N)'; % Process noise
 
 % Numeric Integration
 options = odeset('RelTol', 1e-12);
 
 [~, X_chief] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde(:, :, 1), t_vec), t_vec, x0_C, options);
 [~, X_deputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde(:, :, 2), t_vec), t_vec, x0_D, options);
-% [~, X_eputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde(:, :, 3), t_vec), t_vec, x0_E, options);
+[~, X_eputy] = ode45(@(t, x) TMFunc(t, x, SYSTEM, CONST, w_tilde(:, :, 3), t_vec), t_vec, x0_E, options);
 
 X_chief = X_chief';
 X_deputy = X_deputy';
-% X_eputy = X_eputy';
+X_eputy = X_eputy';
 
 X(:, :, 1) = X_chief;
 X(:, :, 2) = X_deputy;
-% X(:, :, 3) = X_eputy;
+X(:, :, 3) = X_eputy;
 
 % Measurements
-n_s = 2; % Number of satellites
-
-for i = 2:n_s
-    Y(:,:,1) = measurementfcn(X_deputy, X_chief, NOISE.R);  
-%     Y(:,:,2) = measurementfcn(X_eputy, X_deputy, NOISE.R);
-end
+Y(:,:,1) = measurementfcn(X_deputy, X_chief, NOISE.R);  
+Y(:,:,2) = measurementfcn(X_eputy, X_chief, NOISE.R);
 
 % Determine if the Line of Sight is obstructed
 X1 = [X_chief(1, :); X_chief(3, :); X_chief(5, :)]; % [km] Position vector of the chief satellite
