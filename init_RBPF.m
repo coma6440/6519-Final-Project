@@ -17,7 +17,7 @@ pf0.P2 = pf0.P1;
 pf0.Neff = Ns;
 init_state_xt = [r0; 0; 0; 2.57; 0; 7.05];
 init_state_xe1 = [r0+100; 1; 0; 8.75; 0; 0];
-init_state_xe2 = [r0-200; 1; 0; 8.75; 0; 0];
+init_state_xe2 = [0; 7; r0-200; 0; r0/2; 1];
 
 
 Pp = 1*eye(6);

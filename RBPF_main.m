@@ -46,7 +46,7 @@ x_deputy2 = X(:,:,3);
 params.p = size(Y, 1); % Number of measurements
 
 fig = figure;
-fig.WindowState = 'maximized';
+% fig.WindowState = 'maximized';
 PlotTrajectories(t_vec, X, fig);
 PlotMeasurements(t_vec, Y, fig);
 saveas(fig, 'TM.png')
@@ -73,7 +73,7 @@ rough = 0.1e-6*[    0,      0,      0,      0,      0,      0;
                   0,      0,      0,      1,      0,      0;
                   0,      0,      0,      0,      0,      0;
                   0,      0,      0,      0,      0,      1];
-params.PF.Q = params.PF.Q + rough;
+params.PF.Q = params.PF.Q;
 
 params.UKF.R = 10 * NOISE.R;
 params.PF.R = 10 * NOISE.R;
@@ -109,7 +109,7 @@ est_err_fig2 = PlotEstErr(t_vec, x_deputy2, x_map2, P2, sprintf('Particle Filter
 saveas(est_err_fig2, 'EstErr_RBPF_MAP2.png');
 
 % Chief Satellite
-figure
+chief_fig = figure;
 tiledlayout('flow')
 nexttile
 plot(t_vec, xt_hat(1,:) - x_chief(1,:))
@@ -140,7 +140,7 @@ nexttile
 plot(t_vec, xt_hat(6,:) - x_chief(6,:))
 xlabel('Time [s]')
 ylabel('Z Velocity Error [km/s]')
-
+saveas(chief_fig, 'EstErr_RBPF_chief.png');
 %% Measurement Residuals
 % MMSE
 resid_fig1 = PlotMeasInnov(t_vec, y_res_mmse1, sprintf('PF MMSE, N_s = %d', params.Ns));
@@ -162,4 +162,4 @@ xlabel('Time [s]')
 ylabel('Effective Sample Size, N_{eff}')
 plot(t_vec, Neff, 'x', 'LineWidth', 2)
 set(gca, 'FontSize', 14)
-saveas(Neff_fig, 'Neff_RBPF.png')
+saveas(Neff_fig, 'Neff_RBPF_multi-sat.png')
