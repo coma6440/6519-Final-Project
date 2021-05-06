@@ -59,34 +59,43 @@ Y(:,:,2) = measurementfcn(X_eputy, X_chief, NOISE.R);
 
 % Determine if the Line of Sight is obstructed
 X1 = [X_chief(1, :); X_chief(3, :); X_chief(5, :)]; % [km] Position vector of the chief satellite
-X2 = [X_deputy(1, :); X_deputy(3, :); X_deputy(5, :)]; % [km] Position vector of the deputy satellite
-pt = [0; 0; 0]; % Point to find the distance to
-LOS = X2 - X1; % Line of sight vector
 
-V_pt_LOS = cross(cross(pt - X1, LOS), LOS); % Vector w/ minimum distance from pt to LOS
-% Normalize each vector if the magnitude of V_pt_LOS is non-zero
-V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0) = V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0)./vecnorm(V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0)); % Unit LOS vector
+for i = 1:2
+    
+    if i == 1
+        X2 = [X_deputy(1, :); X_deputy(3, :); X_deputy(5, :)]; % [km] Position vector of the deputy satellite
+    else
+        X2 = [X_eputy(1, :); X_eputy(3, :); X_eputy(5, :)]; % [km] Position vector of the deputy satellite
+    end
+    
+    pt = [0; 0; 0]; % Point to find the distance to
+    LOS = X2 - X1; % Line of sight vector
 
-% Calculate the distance between pt and LOS if the magnitude of V_pt_LOS is
-% non-zero
-d_pt_LOS = vecnorm(cross(X1, LOS))./vecnorm(LOS); % [km] Distance from pt to LOS
+    V_pt_LOS = cross(cross(pt - X1, LOS), LOS); % Vector w/ minimum distance from pt to LOS
+    % Normalize each vector if the magnitude of V_pt_LOS is non-zero
+    V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0) = V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0)./vecnorm(V_pt_LOS(:, vecnorm(V_pt_LOS) ~= 0)); % Unit LOS vector
 
-pt_LOS = d_pt_LOS.*V_pt_LOS; % [km] Point in 3D space on LOS closest to pt
+    % Calculate the distance between pt and LOS if the magnitude of V_pt_LOS is
+    % non-zero
+    d_pt_LOS = vecnorm(cross(X1, LOS))./vecnorm(LOS); % [km] Distance from pt to LOS
 
-% Calculate the value of t in the equation:
-%   pt_LOS = X1 + t * LOS
-% to determine whether the shortest distance occurs between the satellites
-% (Corresponds to t = [0, 1]
-t = (pt_LOS - X1)./LOS;
+    pt_LOS = d_pt_LOS.*V_pt_LOS; % [km] Point in 3D space on LOS closest to pt
 
-bool_valid_rng_prm = zeros(1, size(Y, 2));
-% bool_valid_rng_prm(1, :) = abs(t(1, :) - t(2, :)) < 1e-12;
-% bool_valid_rng_prm(2, :) = abs(t(1, :) - t(3, :)) < 1e-12;
-bool_valid_rng_prm = d_pt_LOS > CONST.R_E | t(1, :) < 0 | t(1, :) > 1;
+    % Calculate the value of t in the equation:
+    %   pt_LOS = X1 + t * LOS
+    % to determine whether the shortest distance occurs between the satellites
+    % (Corresponds to t = [0, 1]
+    t = (pt_LOS - X1)./LOS;
 
-valid_rng_prm = double(bool_valid_rng_prm);
+    bool_valid_rng_prm = zeros(1, size(Y, 2));
+    % bool_valid_rng_prm(1, :) = abs(t(1, :) - t(2, :)) < 1e-12;
+    % bool_valid_rng_prm(2, :) = abs(t(1, :) - t(3, :)) < 1e-12;
+    bool_valid_rng_prm = d_pt_LOS > CONST.R_E | t(1, :) < 0 | t(1, :) > 1;
 
-valid_rng_prm(valid_rng_prm == 0) = NaN;
-Y(:,:,1) = Y(:,:,1).*valid_rng_prm;
+    valid_rng_prm = double(bool_valid_rng_prm);
+
+    valid_rng_prm(valid_rng_prm == 0) = NaN;
+    Y(:,:,i) = Y(:,:,i).*valid_rng_prm;
+end
 end
 
